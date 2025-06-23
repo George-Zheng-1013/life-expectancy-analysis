@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 # 1. 数据加载和初步清洗
 def load_and_clean_data():
     # 读取CSV文件
-    df = pd.read_csv('Life Expectancy Data.csv', encoding='utf-8')
+    df = pd.read_csv('dataset\Life Expectancy Data.csv', encoding='utf-8')
     
     # 去除所有列名和内容的首尾空格
     df.columns = df.columns.str.strip()
