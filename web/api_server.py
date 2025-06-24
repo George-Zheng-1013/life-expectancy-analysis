@@ -57,9 +57,6 @@ def get_data():
             for chinese_key, english_key in REVERSE_FIELD_MAPPING.items():
                 if chinese_key in row:
                     new_row[english_key] = row[chinese_key]
-            # 添加ID字段（如果数据库有的话，或者使用行号）
-            new_row['id'] = len(data) + 1
-            data.append(new_row)
             new_row['id'] = len(data) + 1
             data.append(new_row)
     conn.close()
