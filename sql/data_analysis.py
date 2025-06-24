@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 # 1. 数据加载和初步清洗
 def load_and_clean_data():
     # 读取CSV文件
-    df = pd.read_csv('dataset/Life Expectancy Data.csv', encoding='utf-8')
+    df = pd.read_csv('life-expectancy-analysis/dataset/Life Expectancy Data.csv', encoding='utf-8')
     
     # 去除所有列名和内容的首尾空格
     df.columns = df.columns.str.strip()
@@ -20,7 +20,7 @@ def load_and_clean_data():
                   'GDP人均', '人口数量(百万)', '10-19岁消瘦率', '5-9岁消瘦率', 
                   '受教育年限', '发达国家', '发展中国家']
       # 保存中文版本数据
-    df.to_csv('dataset/Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
+    df.to_csv('life-expectancy-analysis/dataset/Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
     
     return df
 
@@ -40,7 +40,7 @@ def handle_missing_values(df):
     for col in categorical_columns:
         df_filled[col] = df_filled[col].fillna(df_filled[col].mode()[0])
       # 保存填充后的数据
-    df_filled.to_csv("dataset/Life_Expectancy_Data_Filled.csv", index=False)
+    df_filled.to_csv("life-expectancy-analysis/dataset/Life_Expectancy_Data_Filled.csv", index=False)
     
     return df_filled
 
@@ -76,7 +76,7 @@ def feature_engineering(df):
     # 删除原始的二进制列，保留综合状态列
     df.drop(columns=['发达国家', '发展中国家'], inplace=True)
       # 保存转换后的数据集
-    df.to_csv("dataset/Life_Expectancy_Data_Transformed_Final.csv", index=False)
+    df.to_csv("life-expectancy-analysis/dataset/Life_Expectancy_Data_Transformed_Final.csv", index=False)
     
     return df
 

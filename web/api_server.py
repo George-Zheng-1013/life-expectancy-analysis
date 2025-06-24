@@ -105,29 +105,39 @@ def add_record():
     conn.close()
     return jsonify({'status': 'success'})
 
-@app.route('/api/record/<int:record_id>', methods=['PUT'])
-def update_record(record_id):
+@app.route('/api/record', methods=['PUT'])
+def update_record():
     record = request.json
-    # 将英文字段名转换为中文字段名
+    country = record.get('Country')
+    year = record.get('Year')
+    if not country or year is None:
+        return jsonify({'status': 'error', 'error': '缺少国家或年份'}), 400
+
     chinese_record = {}
     for english_key, value in record.items():
-        if english_key in FIELD_MAPPING:
+        if english_key in FIELD_MAPPING and english_key not in ['Country', 'Year']:
             chinese_record[FIELD_MAPPING[english_key]] = value
-    
+
     conn = get_conn()
     with conn.cursor() as cursor:
         set_clause = ','.join([f"`{k}`=%s" for k in chinese_record.keys()])
-        sql = f"UPDATE life_expectancy SET {set_clause} WHERE id=%s"
-        cursor.execute(sql, tuple(chinese_record.values()) + (record_id,))
+        sql = f"UPDATE life_expectancy SET {set_clause} WHERE `国家`=%s AND `年份`=%s"
+        cursor.execute(sql, tuple(chinese_record.values()) + (country, year))
         conn.commit()
     conn.close()
     return jsonify({'status': 'success'})
 
-@app.route('/api/record/<int:record_id>', methods=['DELETE'])
-def delete_record(record_id):
+@app.route('/api/record', methods=['DELETE'])
+def delete_record():
+    data = request.json
+    country = data.get('Country')
+    year = data.get('Year')
+    if not country or year is None:
+        return jsonify({'status': 'error', 'error': '缺少国家或年份'}), 400
+
     conn = get_conn()
     with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM life_expectancy WHERE id=%s", (record_id,))
+        cursor.execute("DELETE FROM life_expectancy WHERE `国家`=%s AND `年份`=%s", (country, year))
         conn.commit()
     conn.close()
     return jsonify({'status': 'success'})
@@ -163,6 +173,63 @@ def fit_data():
         print(f"Error during fitting: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/import_csv', methods=['POST'])
+def import_csv():
+    if 'file' not in request.files:
+        return jsonify({'status': 'fail', 'error': '未收到文件'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'status': 'fail', 'error': '未选择文件'}), 400
+    try:
+        try:
+            df = pd.read_csv(file, encoding='utf-8')
+        except UnicodeDecodeError:
+            file.seek(0)
+            df = pd.read_csv(file, encoding='gbk')
+    except Exception as e:
+        return jsonify({'status': 'fail', 'error': f'文件编码错误: {str(e)}'}), 400
+    try:
+        # 这里假设你的表名为 life_expectancy，主键为 Country+Year
+        conn = pymysql.connect(host='localhost', user='root', password='你的密码', db='你的数据库', charset='utf8mb4')
+        cursor = conn.cursor()
+        for _, row in df.iterrows():
+            # 构建插入语句，遇到主键冲突则更新
+            sql = '''
+            INSERT INTO life_expectancy (Country, Year, Life_expectancy, Adult_mortality, Infant_deaths, Alcohol_consumption, Under_five_deaths, Hepatitis_B, Measles, BMI, Polio, Diphtheria, Incidents_HIV, GDP_per_capita, Population_mln, Thinness_ten_nineteen_years, Thinness_five_nine_years, Schooling, Economy_status_Developed, Economy_status_Developing)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                Life_expectancy=VALUES(Life_expectancy),
+                Adult_mortality=VALUES(Adult_mortality),
+                Infant_deaths=VALUES(Infant_deaths),
+                Alcohol_consumption=VALUES(Alcohol_consumption),
+                Under_five_deaths=VALUES(Under_five_deaths),
+                Hepatitis_B=VALUES(Hepatitis_B),
+                Measles=VALUES(Measles),
+                BMI=VALUES(BMI),
+                Polio=VALUES(Polio),
+                Diphtheria=VALUES(Diphtheria),
+                Incidents_HIV=VALUES(Incidents_HIV),
+                GDP_per_capita=VALUES(GDP_per_capita),
+                Population_mln=VALUES(Population_mln),
+                Thinness_ten_nineteen_years=VALUES(Thinness_ten_nineteen_years),
+                Thinness_five_nine_years=VALUES(Thinness_five_nine_years),
+                Schooling=VALUES(Schooling),
+                Economy_status_Developed=VALUES(Economy_status_Developed),
+                Economy_status_Developing=VALUES(Economy_status_Developing)
+            '''
+            values = tuple(row.get(col, None) for col in [
+                'Country', 'Year', 'Life_expectancy', 'Adult_mortality', 'Infant_deaths', 'Alcohol_consumption',
+                'Under_five_deaths', 'Hepatitis_B', 'Measles', 'BMI', 'Polio', 'Diphtheria', 'Incidents_HIV',
+                'GDP_per_capita', 'Population_mln', 'Thinness_ten_nineteen_years', 'Thinness_five_nine_years',
+                'Schooling', 'Economy_status_Developed', 'Economy_status_Developing'
+            ])
+            cursor.execute(sql, values)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'fail', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
