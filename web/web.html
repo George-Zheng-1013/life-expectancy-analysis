@@ -175,21 +175,27 @@
             // 这里我们用 fetch 来模拟从服务器或文件中加载数据
             // 在实际项目中,您可以用任何方式提供这个 CSV 数据
             // FIX: Updated the CSV URL to a working one.
-            const csvUrl = 'https://raw.githubusercontent.com/Rstam51/Life-Expectancy-Data-Analysis/main/Life%20Expectancy%20Data.csv';
+            const apiUrl = 'http://localhost:5000/api/data';
+            const response = await fetch(apiUrl);
+            const data = await response.json();
             
-            try {
-                const response = await fetch(csvUrl);
-                // FIX: Added a check for network response.
-                if (!response.ok) {
-                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
-                }
-                const csvText = await response.text();
-                processData(csvText);
-                initializeUI();
-            } catch (error) {
-                console.error('无法加载数据:', error);
-                alert(`数据加载失败！\n错误详情: ${error.message}`);
-            }
+            // 处理 data ...
+
+            // const csvUrl = 'https://raw.githubusercontent.com/Rstam51/Life-Expectancy-Data-Analysis/main/Life%20Expectancy%20Data.csv';
+            
+            // try {
+            //     const response = await fetch(csvUrl);
+            //     // FIX: Added a check for network response.
+            //     if (!response.ok) {
+            //         throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+            //     }
+            //     const csvText = await response.text();
+            //     processData(csvText);
+            //     initializeUI();
+            // } catch (error) {
+            //     console.error('无法加载数据:', error);
+            //     alert(`数据加载失败！\n错误详情: ${error.message}`);
+            // }
         });
 
         function cleanColumnName(name) {
@@ -511,44 +517,46 @@
             }
         }
 
-        function updateRecord() {
+        async function updateRecord() {
             const id = parseInt(document.getElementById('recordIdInput').value);
             if (!id && id !== 0) {
                 alert('请先加载一条记录！');
                 return;
             }
-            
-            const recordIndex = originalData.findIndex(d => d.id === id);
-            if (recordIndex > -1) {
-                const form = document.getElementById('recordForm');
-                headers.filter(h => h !== 'id').forEach(h => {
-                    const input = form.querySelector(`[name="${h}"]`);
-                    const originalType = typeof originalData[0][h];
-                    if (originalType === 'number' && input.value !== '') {
-                        originalData[recordIndex][h] = parseFloat(input.value);
-                    } else {
-                        originalData[recordIndex][h] = input.value;
-                    }
-                });
-                applyFilter(); // Refresh data view
+            const form = document.getElementById('recordForm');
+            let updatedRecord = {};
+            headers.filter(h => h !== 'id').forEach(h => {
+                const input = form.querySelector(`[name="${h}"]`);
+                updatedRecord[h] = input.value;
+            });
+            // 调用后端API
+            const res = await fetch(`http://localhost:5000/api/record/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(updatedRecord)
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
                 alert(`ID为 ${id} 的记录已更新。`);
+                await reloadData();
             } else {
                 alert('记录更新失败，未找到该ID！');
             }
         }
         
-        function deleteRecord() {
+        async function deleteRecord() {
             const id = parseInt(document.getElementById('recordIdInput').value);
             if (!id && id !== 0) {
                 alert('请先加载一条记录！');
                 return;
             }
-            
             if (confirm(`您确定要删除ID为 ${id} 的记录吗？此操作无法撤销。`)) {
-                const recordIndex = originalData.findIndex(d => d.id === id);
-                if (recordIndex > -1) {
-                    originalData.splice(recordIndex, 1);
-                    applyFilter();
+                const res = await fetch(`http://localhost:5000/api/record/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    await reloadData();
                     document.getElementById('recordForm').reset();
                     document.getElementById('recordIdInput').value = '';
                     alert(`ID为 ${id} 的记录已删除。`);
@@ -557,90 +565,7 @@
                 }
             }
         }
-
-        function addRecord() {
-            const form = document.getElementById('addRecordForm');
-            const newRecord = { id: Math.max(0, ...originalData.map(d => d.id)) + 1 };
-            let isValid = true;
-
-            headers.filter(h => h !== 'id').forEach(h => {
-                 const input = form.querySelector(`[name="${h}"]`);
-                 if(!input.value && (h === 'Country' || h === 'Year' || h === 'Status')) {
-                     isValid = false;
-                 }
-                 const originalType = typeof originalData[0][h];
-                 if (originalType === 'number' && input.value !== '') {
-                    newRecord[h] = parseFloat(input.value);
-                 } else {
-                    newRecord[h] = input.value;
-                 }
-            });
-            
-            if(!isValid) {
-                alert('国家、年份和发展状况为必填项！');
-                return;
-            }
-
-            originalData.push(newRecord);
-            applyFilter();
-            form.reset();
-            alert('新记录已添加！');
-        }
-        
-        function importFromCSV() {
-            const fileInput = document.getElementById('csvFileInput');
-            if (fileInput.files.length === 0) {
-                alert('请先选择一个CSV文件！');
-                return;
-            }
-            
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(event) {
-                try {
-                    const csvText = event.target.result;
-                    // Use the same parsing logic as initial load
-                    const rows = csvText.split('\n');
-                    const importedHeaders = rows[0].split(',').map(h => cleanColumnName(h));
-                    
-                    // Basic check if headers match
-                    if (JSON.stringify(importedHeaders) !== JSON.stringify(headers)) {
-                        console.warn("导入的CSV文件头与现有数据头不完全匹配。将按顺序尝试匹配。");
-                    }
-                    
-                    let addedCount = 0;
-                    let maxId = Math.max(0, ...originalData.map(d => d.id));
-                    
-                    rows.slice(1).forEach(row => {
-                        const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-                        if (values.length < headers.length) return;
-                        
-                        maxId++;
-                        let newRecord = { id: maxId };
-                        headers.forEach((header, i) => {
-                             let value = values[i] ? values[i].replace(/"/g, '').trim() : '';
-                             let numValue = Number(value);
-                             newRecord[header] = !isNaN(numValue) && value !== '' ? numValue : value;
-                        });
-                        
-                        if(newRecord.Country && newRecord.Country.trim() !== '') {
-                            originalData.push(newRecord);
-                            addedCount++;
-                        }
-                    });
-
-                    applyFilter();
-                    alert(`成功导入 ${addedCount} 条记录！`);
-                } catch (e) {
-                    alert('文件处理失败！请确保文件格式正确。');
-                    console.error(e);
-                }
-            };
-            
-            reader.readAsText(file);
-        }
-
     </script>
+
 </body>
 </html>
