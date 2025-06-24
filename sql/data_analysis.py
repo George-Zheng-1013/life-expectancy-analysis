@@ -22,7 +22,7 @@ def load_and_clean_data():
                   '收入构成资源', '受教育年限']
     
     # 保存中文版本数据
-    df.to_csv('Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
+    df.to_csv('dataset\Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
     
     return df
 
@@ -43,7 +43,7 @@ def handle_missing_values(df):
         df_filled[col] = df_filled[col].fillna(df_filled[col].mode()[0])
     
     # 保存填充后的数据
-    df_filled.to_csv("Life_Expectancy_Data_Filled.csv", index=False)
+    df_filled.to_csv("dataset\Life_Expectancy_Data_Filled.csv", index=False)
     
     return df_filled
 
@@ -80,7 +80,7 @@ def feature_engineering(df):
     df.drop(columns=['发展状态'], inplace=True)  # 删除原始分类列
     
     # 保存转换后的数据集
-    df.to_csv("Life_Expectancy_Data_Transformed_Final.csv", index=False)
+    df.to_csv("dataset\Life_Expectancy_Data_Transformed_Final.csv", index=False)
     
     return df
 

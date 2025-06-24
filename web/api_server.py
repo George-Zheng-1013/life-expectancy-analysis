@@ -57,7 +57,9 @@ def get_data():
             for chinese_key, english_key in REVERSE_FIELD_MAPPING.items():
                 if chinese_key in row:
                     new_row[english_key] = row[chinese_key]
-            new_row['id'] = len(data) + 1
+            # 保留从数据库中获取的原始ID
+            if 'id' in row:
+                new_row['id'] = row['id']
             data.append(new_row)
     conn.close()
     return jsonify(data)
