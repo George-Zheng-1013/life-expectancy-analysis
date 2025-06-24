@@ -236,7 +236,25 @@
                 throw new Error("没有获取到任何有效数据，请检查API服务器。");
             }
 
-            headers = Object.keys(originalData[0]);
+            // 定义期望的字段显示顺序
+            const FIELD_ORDER = [
+                'Country', 'Year', 'Life_expectancy', 'Adult_mortality', 
+                'Infant_deaths', 'Alcohol_consumption', 'Under_five_deaths',
+                'Hepatitis_B', 'Measles', 'BMI', 'Polio', 'Diphtheria',
+                'Incidents_HIV', 'GDP_per_capita', 'Population_mln',
+                'Thinness_ten_nineteen_years', 'Thinness_five_nine_years',
+                'Schooling', 'Economy_status_Developed', 'Economy_status_Developing',
+                'Status', 'id'
+            ];
+
+            // 获取数据中实际存在的所有字段
+            const allKeys = Object.keys(originalData[0]);
+            
+            // 按照 FIELD_ORDER 排序，然后添加任何不在 FIELD_ORDER 中的字段
+            headers = FIELD_ORDER.filter(key => allKeys.includes(key));
+            const remainingKeys = allKeys.filter(key => !FIELD_ORDER.includes(key));
+            headers = headers.concat(remainingKeys);
+            
             numericHeaders = headers.filter(h => {
                 const sampleValue = originalData[0][h];
                 return typeof sampleValue === 'number' && h !== 'Year' && h !== 'id';
