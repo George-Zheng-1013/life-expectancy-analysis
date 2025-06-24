@@ -123,6 +123,7 @@
                                     <select id="scatterY" class="p-2 border border-gray-300 rounded-lg"></select>
                                 </div>
                                 <button onclick="showScatterPlot()" class="w-full mt-2 bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition">生成散点图</button>
+                                <button onclick="fitScatterPlot()" id="fitButton" class="w-full mt-2 bg-teal-500 text-white p-2 rounded-lg hover:bg-teal-600 transition" disabled>随机森林拟合</button>
                             </div>
                              <div>
                                 <h3 class="font-medium mb-2">专题分析</h3>
@@ -191,6 +192,7 @@
         let currentPage = 1;
         const rowsPerPage = 15;
         let correlationChartInstance, analysisChartInstance;
+        let currentScatterX, currentScatterY;
           const CHINESE_HEADERS = {
             'Country': '国家', 'Year': '年份', 'Life_expectancy': '预期寿命',
             'Adult_mortality': '成人死亡率', 'Infant_deaths': '婴儿死亡数', 'Alcohol_consumption': '酒精消费',
@@ -425,26 +427,97 @@
         function showScatterPlot() {
             const xVar = document.getElementById('scatterX').value;
             const yVar = document.getElementById('scatterY').value;
+            currentScatterX = xVar;
+            currentScatterY = yVar;
 
-            const data = originalData.map(d => ({ x: d[xVar], y: d[yVar] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number');
-
-            const config = {
+            const data = originalData.map(d => ({ x: d[xVar], y: d[yVar] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number');            const config = {
                 type: 'scatter',
                 data: {
                     datasets: [{
                         label: `${CHINESE_HEADERS[yVar]} vs ${CHINESE_HEADERS[xVar]}`,
                         data: data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 0.8)',
+                        pointRadius: 3,
+                        order: 2  // 散点图在下层
                     }]
                 },
                 options: {
                     scales: {
                         x: { title: { display: true, text: CHINESE_HEADERS[xVar] || xVar } },
                         y: { title: { display: true, text: CHINESE_HEADERS[yVar] || yVar } }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'point'
                     }
                 }
             };
             renderAnalysisChart(config, `散点图: ${CHINESE_HEADERS[yVar]} vs ${CHINESE_HEADERS[xVar]}`);
+            document.getElementById('fitButton').disabled = false;
+        }
+
+        async function fitScatterPlot() {
+            if (!analysisChartInstance || !currentScatterX || !currentScatterY) {
+                alert('请先生成一个散点图。');
+                return;
+            }
+            
+            const fitButton = document.getElementById('fitButton');
+            fitButton.textContent = '正在拟合...';
+            fitButton.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/fit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        xVar: currentScatterX,
+                        yVar: currentScatterY
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `服务器错误: ${response.status}`);
+                }
+
+                const linePoints = await response.json();                // 移除旧的拟合曲线
+                const fitLineIndex = analysisChartInstance.data.datasets.findIndex(d => d.label.includes('拟合曲线'));
+                if (fitLineIndex > -1) {
+                    analysisChartInstance.data.datasets.splice(fitLineIndex, 1);
+                }// 添加新的拟合曲线，使其更加突出
+                analysisChartInstance.data.datasets.push({
+                    label: '随机森林拟合曲线',
+                    data: linePoints,
+                    borderColor: 'rgba(255, 69, 0, 1)',  // 更鲜艳的橙红色
+                    backgroundColor: 'rgba(255, 69, 0, 0.1)',
+                    type: 'line',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderWidth: 4,  // 增加线条宽度
+                    order: 1,  // 设置绘制顺序，数值越小越在上层
+                    z: 2  // 确保在散点图之上
+                });
+
+                analysisChartInstance.update();
+
+            } catch (error) {
+                console.error('拟合失败:', error);
+                alert(`拟合失败: ${error.message}`);
+            } finally {
+                fitButton.textContent = '随机森林拟合';
+                fitButton.disabled = false;
+            }
         }
 
         function showCountryTrend() {

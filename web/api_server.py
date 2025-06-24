@@ -2,6 +2,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pymysql
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+import json
+import os
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域
@@ -126,6 +131,38 @@ def delete_record(record_id):
         conn.commit()
     conn.close()
     return jsonify({'status': 'success'})
+
+@app.route('/api/fit', methods=['POST'])
+def fit_data():
+    try:
+        body = request.json
+        x_var = body.get('xVar')
+        y_var = body.get('yVar')
+
+        if not x_var or not y_var:
+            return jsonify({"error": "Missing xVar or yVar"}), 400
+
+        # 只支持与预期寿命的拟合
+        if y_var != 'Life_expectancy':
+            return jsonify({"error": "Only support fitting with Life_expectancy"}), 400        # 读取预计算的拟合结果
+        fits_file = os.path.join(os.path.dirname(__file__), 'precomputed_fits.json')
+        
+        if not os.path.exists(fits_file):
+            return jsonify({"error": "Precomputed fits not found. Please run precompute_fits.py first."}), 500
+
+        with open(fits_file, 'r', encoding='utf-8') as f:
+            all_fits = json.load(f)
+
+        if x_var not in all_fits:
+            return jsonify({"error": f"No precomputed fit found for {x_var}"}), 404
+
+        # 返回拟合曲线的点数据，前端期望的是数组格式
+        return jsonify(all_fits[x_var]['line_points'])
+
+    except Exception as e:
+        print(f"Error during fitting: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
