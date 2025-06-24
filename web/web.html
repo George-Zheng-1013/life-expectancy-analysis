@@ -169,63 +169,45 @@
             'Total_expenditure': '卫生总支出占比', 'Diphtheria': '白喉疫苗接种率', 'HIV/AIDS': '艾滋病死亡率',
             'GDP': '人均GDP', 'Population': '人口', 'thinness__1-19_years': '10-19岁青少年消瘦率',
             'thinness_5-9_years': '5-9岁儿童消瘦率', 'Income_composition_of_resources': '人力资源收入构成指数', 'Schooling': '受教育年限'
-        };
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 这里我们用 fetch 来模拟从服务器或文件中加载数据
-            // 在实际项目中,您可以用任何方式提供这个 CSV 数据
-            // FIX: Updated the CSV URL to a working one.
-            const apiUrl = 'http://localhost:5000/api/data';
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            
-            // 处理 data ...
-
-            // const csvUrl = 'https://raw.githubusercontent.com/Rstam51/Life-Expectancy-Data-Analysis/main/Life%20Expectancy%20Data.csv';
-            
-            // try {
-            //     const response = await fetch(csvUrl);
-            //     // FIX: Added a check for network response.
-            //     if (!response.ok) {
-            //         throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
-            //     }
-            //     const csvText = await response.text();
-            //     processData(csvText);
-            //     initializeUI();
-            // } catch (error) {
-            //     console.error('无法加载数据:', error);
-            //     alert(`数据加载失败！\n错误详情: ${error.message}`);
-            // }
+        };        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const apiUrl = 'http://localhost:5000/api/data';
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // 处理数据，将Status数值转换为文本
+                const processedData = data.map(row => ({
+                    ...row,
+                    Status: row.Status === 1 ? 'Developed' : 'Developing'
+                }));
+                
+                processData(processedData);
+                initializeUI();
+            } catch (error) {
+                console.error('无法加载数据:', error);
+                alert(`数据加载失败！\n错误详情: ${error.message}`);
+            }
         });
 
         function cleanColumnName(name) {
             return name.trim().replace(/\s+/g, '_');
         }
-        
-        function processData(csvText) {
-            const rows = csvText.split('\n');
-            const rawHeaders = rows[0].split(',').map(h => cleanColumnName(h));
+          function processData(data) {
+            // 数据已经是对象数组格式
+            originalData = data;
             
-            headers = rawHeaders;
-            
-            originalData = rows.slice(1).map((row, index) => {
-                // Regex to split by comma but ignore commas inside quotes
-                const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-
-                let record = { id: index + 1 };
-                headers.forEach((header, i) => {
-                    let value = values[i] ? values[i].replace(/"/g, '').trim() : '';
-                    let numValue = Number(value);
-                    record[header] = !isNaN(numValue) && value !== '' ? numValue : value;
-                });
-                return record;
-            }).filter(d => d.Country && d.Country.trim() !== ''); // 过滤掉空行
-
             if (originalData.length === 0) {
-                 throw new Error("CSV文件解析后没有得到任何有效数据，请检查文件格式。");
+                throw new Error("没有获取到任何有效数据，请检查API服务器。");
             }
 
-            numericHeaders = headers.filter(h => typeof originalData[0][h] === 'number' && h !== 'Year' && h !== 'id');
+            headers = Object.keys(originalData[0]);
+            numericHeaders = headers.filter(h => {
+                const sampleValue = originalData[0][h];
+                return typeof sampleValue === 'number' && h !== 'Year' && h !== 'id';
+            });
             displayData = [...originalData];
         }
 
@@ -481,9 +463,31 @@
                 }
             };
             renderChart(config, '不同发展状况国家的平均预期寿命对比');
+        }        // --- 数据库管理 (DB Management) 逻辑 ---
+        async function reloadData() {
+            try {
+                const apiUrl = 'http://localhost:5000/api/data';
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // 处理数据，将Status数值转换为文本
+                const processedData = data.map(row => ({
+                    ...row,
+                    Status: row.Status === 1 ? 'Developed' : 'Developing'
+                }));
+                
+                processData(processedData);
+                renderTable();
+                populateSelectors();
+            } catch (error) {
+                console.error('重新加载数据失败:', error);
+                alert(`重新加载数据失败！\n错误详情: ${error.message}`);
+            }
         }
 
-        // --- 数据库管理 (DB Management) 逻辑 ---
         function renderRecordForm(formId) {
             const form = document.getElementById(formId);
             form.innerHTML = '';
@@ -523,25 +527,76 @@
                 alert('请先加载一条记录！');
                 return;
             }
-            const form = document.getElementById('recordForm');
-            let updatedRecord = {};
+            const form = document.getElementById('recordForm');            let updatedRecord = {};
             headers.filter(h => h !== 'id').forEach(h => {
                 const input = form.querySelector(`[name="${h}"]`);
-                updatedRecord[h] = input.value;
+                let value = input.value;
+                if (h === 'Status') {
+                    // 将文本转换为数值
+                    value = value.toLowerCase() === 'developed' ? 1 : 0;
+                }
+                updatedRecord[h] = value;
             });
-            // 调用后端API
-            const res = await fetch(`http://localhost:5000/api/record/${id}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(updatedRecord)
+            
+            try {
+                const res = await fetch(`http://localhost:5000/api/record/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(updatedRecord)
+                });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    alert(`ID为 ${id} 的记录已更新。`);
+                    await reloadData();
+                } else {
+                    alert('记录更新失败，未找到该ID！');
+                }
+            } catch (error) {
+                alert(`记录更新失败：${error.message}`);
+            }}
+        
+        async function addRecord() {
+            const form = document.getElementById('addRecordForm');
+            let newRecord = {};
+            headers.filter(h => h !== 'id').forEach(h => {
+                const input = form.querySelector(`[name="${h}"]`);
+                let value = input.value;
+                if (h === 'Status') {
+                    // 将文本转换为数值
+                    value = value.toLowerCase() === 'developed' ? 1 : 0;
+                }
+                newRecord[h] = value;
             });
-            const result = await res.json();
-            if(result.status === 'success') {
-                alert(`ID为 ${id} 的记录已更新。`);
-                await reloadData();
-            } else {
-                alert('记录更新失败，未找到该ID！');
+            
+            try {
+                const res = await fetch('http://localhost:5000/api/record', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(newRecord)
+                });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    alert('新记录已添加。');
+                    await reloadData();
+                    form.reset();
+                } else {
+                    alert('添加记录失败！');
+                }
+            } catch (error) {
+                alert(`添加记录失败：${error.message}`);
             }
+        }
+        
+        async function importFromCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请选择一个CSV文件！');
+                return;
+            }
+            
+            // 这里简化处理，实际项目中可能需要更复杂的CSV解析
+            alert('CSV导入功能需要后端支持，当前版本暂不支持。');
         }
         
         async function deleteRecord() {
