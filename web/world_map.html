@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>世界预期寿命数据 - 地图可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+    <style>
+        #worldMap { height: 70vh; width: 100%; }
+        .legend {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-4">
+        <header class="text-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800">世界数据地图可视化</h1>
+            <p class="text-md text-gray-600">探索不同健康与经济指标在全球的分布情况</p>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex flex-wrap items-center justify-center gap-4">
+            <div>
+                <label for="mapFeatureSelect" class="block text-sm font-medium text-gray-700">选择特征:</label>
+                <select id="mapFeatureSelect" onchange="updateWorldMap()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+            <div>
+                <label for="mapYearSelect" class="block text-sm font-medium text-gray-700">选择年份:</label>
+                <select id="mapYearSelect" onchange="updateWorldMap()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+            <div>
+                <label for="colorSchemeSelect" class="block text-sm font-medium text-gray-700">选择配色:</label>
+                <select id="colorSchemeSelect" onchange="updateWorldMap()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="blues">蓝</option>
+                    <option value="reds">红</option>
+                    <option value="greens">绿</option>
+                    <option value="oranges">橙</option>
+                    <option value="purples">紫</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Map and Info -->
+        <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Map Container -->
+            <div class="flex-grow bg-white p-2 rounded-lg shadow-md">
+                 <h2 id="map-title" class="text-xl font-semibold text-center mb-2">世界地图</h2>
+                <div id="worldMap"></div>
+            </div>
+            <!-- Stats and Legend -->
+            <div class="lg:w-1/4 w-full flex flex-col gap-4">
+                <div id="mapStats" class="bg-white p-4 rounded-lg shadow-md h-fit">
+                    <p>请选择特征和年份以查看统计数据。</p>
+                </div>
+                <div id="mapLegend" class="bg-white p-4 rounded-lg shadow-md h-fit">
+                    <!-- Legend will be populated here -->
+                </div>
+            </div>
+        </div>
+         <div class="text-center mt-4">
+            <a href="web.html" class="text-indigo-600 hover:text-indigo-800 font-medium">返回主分析页面</a>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables ---
+        let originalData = [];
+        let numericHeaders = [];
+        let worldMap = null;
+        let currentMapFeature = 'Life_expectancy';
+        let currentMapYear = 2015;
+        let geoJsonLayer = null;        const CHINESE_HEADERS = {
+            'Country': '国家', 'Year': '年份', 'Status': '发展状况',
+            'Life_expectancy': '预期寿命', 'Adult_mortality': '成人死亡率',
+            'Infant_deaths': '婴儿死亡数', 'Alcohol_consumption': '酒精消费',
+            'Under_five_deaths': '五岁以下死亡数', 'Hepatitis_B': '乙肝疫苗接种率',
+            'Measles': '麻疹病例数', 'BMI': 'BMI指数',
+            'Polio': '脊髓灰质炎疫苗接种率', 'Diphtheria': '白喉疫苗接种率',
+            'Incidents_HIV': 'HIV/AIDS死亡率', 'GDP_per_capita': 'GDP人均', 'Population_mln': '人口数量(百万)',
+            'Thinness_ten_nineteen_years': '10-19岁消瘦率', 'Thinness_five_nine_years': '5-9岁消瘦率',
+            'Schooling': '受教育年限', 'Economy_status_Developed': '发达国家', 'Economy_status_Developing': '发展中国家'
+        };        const COUNTRY_NAME_MAPPING = {
+            'United States': 'USA', // Corrected based on GeoJSON data
+            'United Kingdom': 'England', // Mapped to what's available in the GeoJSON
+            'Russian Federation': 'Russia',
+            'Iran, Islamic Rep.': 'Iran',
+            'Venezuela, RB': 'Venezuela',
+            'Tanzania': 'United Republic of Tanzania', // Corrected based on GeoJSON data
+            'Congo, Dem. Rep.': 'Democratic Republic of the Congo',
+            'Congo, Rep.': 'Republic of the Congo',
+            'North Macedonia': 'Macedonia',
+            'Syrian Arab Republic': 'Syria',
+            'Lao PDR': 'Laos',
+            'Brunei Darussalam': 'Brunei',
+            'Cabo Verde': 'Cape Verde',
+            'Cote d\'Ivoire': 'Ivory Coast',
+            'Czechia': 'Czech Republic',
+            'Egypt, Arab Rep.': 'Egypt',
+            'Gambia, The': 'Gambia',
+            'Bahamas, The': 'The Bahamas', // Corrected based on GeoJSON data
+            'Micronesia, Fed. Sts.': 'Federated States of Micronesia',
+            'Yemen, Rep.': 'Yemen',
+            'Kyrgyz Republic': 'Kyrgyzstan',
+            'Slovak Republic': 'Slovakia',
+            'Eswatini': 'Swaziland',
+            'Turkiye': 'Turkey',
+            'St. Lucia': 'Saint Lucia',
+            'St. Vincent and the Grenadines': 'Saint Vincent and the Grenadines',
+            'Sao Tome and Principe': 'São Tomé and Príncipe'
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/data');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();                originalData = data.map(row => ({
+                    ...row, // 修正：保留原始数据所有字段
+                    Status: row.Economy_status_Developed === 1 ? 'Developed' : 'Developing'
+                }));
+
+                if (originalData.length > 0) {
+                    const firstRow = originalData[0];
+                    headers = Object.keys(firstRow);
+                    numericHeaders = headers.filter(h => {
+                        const sampleValue = firstRow[h];
+                        return typeof sampleValue === 'number' && h !== 'Year' && h !== 'id';
+                    });
+                }
+
+                initializeMapSelectors();
+                initializeWorldMap();
+
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+                document.body.innerHTML = `<div class="text-center p-8"><h1 class="text-red-600 font-bold">数据加载失败</h1><p>${error.message}</p><p>请确保后端API服务 (api_server.py) 正在运行，并且可以从 http://localhost:5000/api/data 访问。</p></div>`;
+            }
+        });
+
+        function initializeMapSelectors() {
+            const featureSelect = document.getElementById('mapFeatureSelect');
+            featureSelect.innerHTML = ''; // Clear existing options
+            numericHeaders.forEach(h => {
+                const option = document.createElement('option');
+                option.value = h;
+                option.textContent = CHINESE_HEADERS[h] || h;
+                if (h === 'Life_expectancy') option.selected = true;
+                featureSelect.appendChild(option);
+            });
+
+            const yearSelect = document.getElementById('mapYearSelect');
+            yearSelect.innerHTML = ''; // Clear existing options
+            const years = [...new Set(originalData.map(d => d.Year))].sort((a, b) => b - a);
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === 2015) option.selected = true;
+                yearSelect.appendChild(option);
+            });
+        }
+
+        function initializeWorldMap() {
+            if (worldMap) {
+                worldMap.remove();
+            }
+            worldMap = L.map('worldMap').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(worldMap);
+            updateWorldMap();
+        }
+
+        // --- Map Update Logic ---
+        function updateWorldMap() {
+            if (!worldMap || originalData.length === 0) return;
+
+            const feature = document.getElementById('mapFeatureSelect').value;
+            const year = parseInt(document.getElementById('mapYearSelect').value);
+            const colorScheme = document.getElementById('colorSchemeSelect').value;
+
+            currentMapFeature = feature;
+            currentMapYear = year;
+
+            const yearData = originalData.filter(d => d.Year === year);
+            const values = yearData.map(d => d[feature]).filter(v => v !== null && v !== undefined && !isNaN(v));
+            
+            if (values.length === 0) {
+                 document.getElementById('mapStats').innerHTML = '<p>当前所选年份和特征无有效数据。</p>';
+                 document.getElementById('map-title').textContent = `世界地图 - ${CHINESE_HEADERS[feature] || feature} (${year}年) - 无数据`;
+                 // Still draw the map but with all countries in default color
+                 drawGeoJsonLayer({}, 0, 0, colorScheme);
+                 addMapLegend(0, 0, colorScheme, true);
+                 return;
+            }
+
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const avg = values.reduce((a, b) => a + b, 0) / values.length;
+
+            document.getElementById('mapStats').innerHTML = `
+                <p><strong>特征:</strong> ${CHINESE_HEADERS[feature] || feature}</p>
+                <p><strong>年份:</strong> ${year}</p>
+                <p><strong>最小值:</strong> ${min.toFixed(2)}</p>
+                <p><strong>最大值:</strong> ${max.toFixed(2)}</p>
+                <p><strong>平均值:</strong> ${avg.toFixed(2)}</p>
+                <p><strong>数据点数:</strong> ${values.length}</p>
+            `;
+            document.getElementById('map-title').textContent = `世界地图 - ${CHINESE_HEADERS[feature] || feature} 分布 (${year}年)`;
+
+            const countryData = {};
+            yearData.forEach(d => {
+                const countryName = d.Country;
+                const value = d[feature];
+                if (countryName && typeof countryName === 'string' && value !== null && !isNaN(value)) {
+                    countryData[countryName] = parseFloat(value);
+                }
+            });
+
+            drawGeoJsonLayer(countryData, min, max, colorScheme);
+            addMapLegend(min, max, colorScheme);
+        }
+        
+        function drawGeoJsonLayer(countryData, min, max, colorScheme) {
+             // Clear existing GeoJSON layers
+            if(geoJsonLayer) {
+                worldMap.removeLayer(geoJsonLayer);
+            }
+
+            fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    geoJsonLayer = L.geoJSON(data, {
+                        style: feature => styleFeature(feature, countryData, min, max, colorScheme),
+                        onEachFeature: (feature, layer) => onEachFeature(feature, layer, countryData, min, max, colorScheme)
+                    }).addTo(worldMap);
+                })
+                .catch(error => {
+                    console.error('加载地图GeoJSON数据失败:', error);
+                    alert('加载地图边界数据失败，请检查网络连接。');
+                });
+        }
+        
+        function findCountryValue(geoCountryName, countryData) {
+            if (!geoCountryName) return undefined;
+
+            // 1. Direct match (e.g., GeoJSON name 'France' matches data name 'France')
+            if (countryData[geoCountryName] !== undefined) {
+                return countryData[geoCountryName];
+            }
+
+            // 2. Mapped match (e.g., GeoJSON name 'United States of America' is mapped from data name 'United States')
+            // This performs a reverse lookup on the COUNTRY_NAME_MAPPING object.
+            const dataCountryName = Object.keys(COUNTRY_NAME_MAPPING).find(key => COUNTRY_NAME_MAPPING[key] === geoCountryName);
+            if (dataCountryName && countryData[dataCountryName] !== undefined) {
+                return countryData[dataCountryName];
+            }
+            
+            // If we are here, no match was found.
+            return undefined;
+        }
+
+        function styleFeature(feature, countryData, min, max, colorScheme) {
+            const geoCountryName = feature.properties.name || feature.properties.NAME;
+            
+            const value = findCountryValue(geoCountryName, countryData);
+
+            if (value !== undefined && !isNaN(value)) {
+                return {
+                    fillColor: getColorScheme(colorScheme, value, min, max),
+                    weight: 1, opacity: 1, color: '#666', fillOpacity: 0.8
+                };
+            } else {
+                return {
+                    fillColor: '#f0f0f0', weight: 1, opacity: 1, color: '#999', fillOpacity: 0.4
+                };
+            }
+        }
+
+        function onEachFeature(feature, layer, countryData, min, max, colorScheme) {
+            const geoCountryName = feature.properties.name || feature.properties.NAME;
+            const value = findCountryValue(geoCountryName, countryData);
+
+            const popupContent = `
+                <div>
+                    <h3><strong>${geoCountryName}</strong></h3>
+                    <p><strong>${CHINESE_HEADERS[currentMapFeature] || currentMapFeature}:</strong> 
+                    ${value !== undefined && value !== null && !isNaN(value) ? value.toFixed(2) : '暂无数据'}</p>
+                    <p><strong>年份:</strong> ${currentMapYear}</p>
+                </div>
+            `;
+            layer.bindPopup(popupContent);
+
+            layer.on({
+                mouseover: e => {
+                    const l = e.target;
+                    l.setStyle({ weight: 3, color: '#000', fillOpacity: 0.95 });
+                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                        l.bringToFront();
+                    }
+                },
+                mouseout: e => {
+                    geoJsonLayer.resetStyle(e.target);
+                }
+            });
+        }
+
+        // --- Helpers ---
+        function getColorScheme(scheme, value, min, max) {
+            if (max <= min) return 'rgb(220, 220, 220)';
+            const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            const colors = {
+                'blues': [[247,251,255],[222,235,247],[198,219,239],[158,202,225],[107,174,214],[66,146,198],[33,113,181],[8,81,156],[8,48,107]],
+                'reds': [[255,245,240],[254,224,210],[252,187,161],[252,146,114],[251,106,74],[239,59,44],[203,24,29],[165,15,21],[103,0,13]],
+                'greens': [[247,252,245],[229,245,224],[199,233,192],[161,217,155],[116,196,118],[65,171,93],[35,139,69],[0,109,44],[0,68,27]],
+                'oranges': [[255,245,235],[254,230,206],[253,208,162],[253,174,107],[253,141,60],[241,105,19],[217,72,1],[166,54,3],[127,39,4]],
+                'purples': [[252,251,253],[239,237,245],[218,218,235],[188,189,220],[158,154,200],[128,125,186],[106,81,163],[84,39,143],[63,0,125]]
+            };
+            const colorArray = colors[scheme] || colors['blues'];
+            const index = Math.floor(ratio * (colorArray.length - 1));
+            const color = colorArray[Math.min(index, colorArray.length - 1)];
+            return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+        }
+
+        function addMapLegend(min, max, colorScheme, noData = false) {
+            const legendContainer = document.getElementById('mapLegend');
+            legendContainer.innerHTML = ''; // Clear previous legend
+
+            const div = L.DomUtil.create('div', 'info legend');
+            const numSteps = 7;
+
+            if (noData || max <= min) {
+                 div.innerHTML = '<h4>图例</h4>无有效数据或单一值';
+                 legendContainer.appendChild(div);
+                 return;
+            }
+
+            const step = (max - min) / numSteps;
+            const grades = Array.from({length: numSteps + 1}, (_, i) => min + i * step);
+
+            div.innerHTML = `<h4>${CHINESE_HEADERS[currentMapFeature] || currentMapFeature}</h4>`;
+            for (let i = 0; i < grades.length -1; i++) {
+                const from = grades[i];
+                const to = grades[i+1];
+                const color = getColorScheme(colorScheme, from + step/2, min, max);
+                div.innerHTML +=
+                    `<i style="background:${color}"></i> ` +
+                    `${from.toFixed(2)} &ndash; ${to.toFixed(2)}<br>`;
+            }
+            
+            legendContainer.appendChild(div);
+        }
+    </script>
+</body>
+</html>

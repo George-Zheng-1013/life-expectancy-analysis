@@ -8,21 +8,19 @@ from sklearn.ensemble import RandomForestRegressor
 # 1. 数据加载和初步清洗
 def load_and_clean_data():
     # 读取CSV文件
-    df = pd.read_csv('dataset\Life Expectancy Data.csv', encoding='utf-8')
+    df = pd.read_csv('dataset/Life Expectancy Data.csv', encoding='utf-8')
     
     # 去除所有列名和内容的首尾空格
     df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    
-    # 列名改为中文
-    df.columns = ['国家', '年份', '发展状态', '预期寿命', '成人死亡率', '婴儿死亡数', 
-                  '酒精消费', '医疗支出百分比', '乙肝疫苗接种率', '麻疹病例数', 'BMI指数', 
-                  '五岁以下死亡数', '脊髓灰质炎疫苗接种率', '总医疗支出', '白喉疫苗接种率', 
-                  'HIV/AIDS死亡率', 'GDP', '人口数量', '1-19岁消瘦率', '5-9岁消瘦率', 
-                  '收入构成资源', '受教育年限']
-    
-    # 保存中文版本数据
-    df.to_csv('dataset\Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
+      # 列名改为中文
+    df.columns = ['国家', '年份', '预期寿命', '成人死亡率', '婴儿死亡数', '酒精消费', 
+                  '五岁以下死亡数', '乙肝疫苗接种率', '麻疹病例数', 'BMI指数', 
+                  '脊髓灰质炎疫苗接种率', '白喉疫苗接种率', 'HIV/AIDS死亡率', 
+                  'GDP人均', '人口数量(百万)', '10-19岁消瘦率', '5-9岁消瘦率', 
+                  '受教育年限', '发达国家', '发展中国家']
+      # 保存中文版本数据
+    df.to_csv('dataset/Life_Expectancy_Data_Chinese.csv', index=False, encoding='utf-8-sig')
     
     return df
 
@@ -41,9 +39,8 @@ def handle_missing_values(df):
     categorical_columns = df_filled.select_dtypes(include=['object']).columns.tolist()
     for col in categorical_columns:
         df_filled[col] = df_filled[col].fillna(df_filled[col].mode()[0])
-    
-    # 保存填充后的数据
-    df_filled.to_csv("dataset\Life_Expectancy_Data_Filled.csv", index=False)
+      # 保存填充后的数据
+    df_filled.to_csv("dataset/Life_Expectancy_Data_Filled.csv", index=False)
     
     return df_filled
 
@@ -72,15 +69,14 @@ def handle_outliers(df):
 
 # 4. 特征工程
 def feature_engineering(df):
-    # one-hot编码处理分类变量
-    status_map = {'Developing': 0, 'Developed': 1}
+    # 新数据已经有二进制编码的发展状态
+    # 创建一个综合的发展状态列
+    df['发展状态_数值'] = df['发达国家']  # 1表示发达国家，0表示发展中国家
     
-    # 将分类变量转换为数值
-    df['发展状态_数值'] = df['发展状态'].map(status_map)
-    df.drop(columns=['发展状态'], inplace=True)  # 删除原始分类列
-    
-    # 保存转换后的数据集
-    df.to_csv("dataset\Life_Expectancy_Data_Transformed_Final.csv", index=False)
+    # 删除原始的二进制列，保留综合状态列
+    df.drop(columns=['发达国家', '发展中国家'], inplace=True)
+      # 保存转换后的数据集
+    df.to_csv("dataset/Life_Expectancy_Data_Transformed_Final.csv", index=False)
     
     return df
 
