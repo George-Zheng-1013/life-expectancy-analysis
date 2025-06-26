@@ -84,14 +84,18 @@ python api_server.py
 
 ## 致谢
 
-数据来源：  
-- WHO 官方数据：[Life Expectancy Data](https://www.who.int/data/gho/data/themes/mortality-and-global-health-estimates/ghe-life-expectancy-and-healthy-life-expectancy)  
-- Kaggle 数据集：lashagoch/life-expectancy-who-updated  
-  获取方式：
-  ```python
-  import kagglehub
+数据来源：
 
-  # Download latest version
-  path = kagglehub.dataset_download("lashagoch/life-expectancy-who-updated")
-  print("Path to dataset files:", path)
-  ```
+- WHO 官方数据：[Life Expectancy Data](https://www.who.int/data/gho/data/themes/mortality-and-global-health-estimates/ghe-life-expectancy-and-healthy-life-expectancy)
+- Kaggle 数据集：lashagoch/life-expectancy-who-updated
+
+```bibtex
+@misc{lasha_gochiashvili_2023,
+    title={Life Expectancy (WHO) Fixed},
+    url={https://www.kaggle.com/ds/3065197},
+    DOI={10.34740/KAGGLE/DS/3065197},
+    publisher={Kaggle},
+    author={Lasha Gochiashvili},
+    year={2023}
+}
+```
