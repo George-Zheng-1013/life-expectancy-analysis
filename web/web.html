@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>预期寿命数据分析与管理系统</title>    <script src="https://cdn.tailwindcss.com"></script>
+    <title>预期寿命数据分析与管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Leaflet CSS -->
@@ -14,38 +16,45 @@
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
         }
+
         .tab-button.active {
             border-color: #3b82f6;
             color: #3b82f6;
             background-color: #eff6ff;
         }
+
         .tab-content {
             display: none;
         }
+
         .tab-content.active {
             display: block;
         }
+
         .chart-container {
             position: relative;
             height: 450px;
             width: 100%;
         }
+
         .map-container {
             height: 500px;
             width: 100%;
             border-radius: 8px;
             overflow: hidden;
         }
+
         .legend {
             line-height: 18px;
             color: #555;
             background: white;
-            background: rgba(255,255,255,0.8);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             padding: 6px 8px;
             font: 14px/16px Arial, Helvetica, sans-serif;
         }
+
         .legend i {
             width: 18px;
             height: 18px;
@@ -55,23 +64,31 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">预期寿命数据分析与管理系统</h1>
             <p class="text-md text-gray-500 mt-2">一个用于世界卫生组织(WHO)数据的交互式分析平台</p>
-        </header>        <!-- Tabs Navigation -->
+        </header> <!-- Tabs Navigation -->
         <div class="mb-6 border-b border-gray-200">
             <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-                <button onclick="changeTab('data-view')" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300" data-tab="data-view">
+                <button onclick="changeTab('data-view')"
+                    class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300"
+                    data-tab="data-view">
                     数据视图
                 </button>
-                <button onclick="changeTab('analysis-view')" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300" data-tab="analysis-view">
+                <button onclick="changeTab('analysis-view')"
+                    class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300"
+                    data-tab="analysis-view">
                     可视化分析
                 </button>
-                <a href="world_map.html" target="_blank" class="whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300">世界地图(新页面)</a>
-                <button onclick="changeTab('db-management')" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300" data-tab="db-management">
+                <a href="world_map.html" target="_blank"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300">世界地图(新页面)</a>
+                <button onclick="changeTab('db-management')"
+                    class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-blue-600 hover:border-blue-300"
+                    data-tab="db-management">
                     数据库管理
                 </button>
             </nav>
@@ -84,9 +101,14 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm">
                     <h2 class="text-2xl font-semibold mb-4">数据浏览器</h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <input type="text" id="searchInput" class="col-span-1 md:col-span-2 p-2 border border-gray-300 rounded-lg" placeholder="在“国家”列中搜索...">
-                        <button onclick="applyFilter()" class="col-span-1 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition">执行筛选</button>
-                        <button onclick="exportToCSV()" class="col-span-1 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition">导出为 CSV</button>
+                        <input type="text" id="searchInput"
+                            class="col-span-1 md:col-span-2 p-2 border border-gray-300 rounded-lg"
+                            placeholder="在“国家”列中搜索...">
+                        <button onclick="applyFilter()"
+                            class="col-span-1 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition">执行筛选</button>
+                        <button onclick="exportToCSV()"
+                            class="col-span-1 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition">导出为
+                            CSV</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -99,9 +121,13 @@
                         </table>
                     </div>
                     <div class="mt-4 flex justify-between items-center">
-                        <button onclick="prevPage()" id="prevBtn" class="bg-gray-300 text-gray-700 p-2 rounded-lg hover:bg-gray-400 transition">&lt; 上一页</button>
+                        <button onclick="prevPage()" id="prevBtn"
+                            class="bg-gray-300 text-gray-700 p-2 rounded-lg hover:bg-gray-400 transition">&lt;
+                            上一页</button>
                         <span id="pageInfo"></span>
-                        <button onclick="nextPage()" id="nextBtn" class="bg-gray-300 text-gray-700 p-2 rounded-lg hover:bg-gray-400 transition">下一页 &gt;</button>
+                        <button onclick="nextPage()" id="nextBtn"
+                            class="bg-gray-300 text-gray-700 p-2 rounded-lg hover:bg-gray-400 transition">下一页
+                            &gt;</button>
                     </div>
                 </div>
             </div>
@@ -112,9 +138,10 @@
                     <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm">
                         <h2 class="text-2xl font-semibold mb-4">分析控制台</h2>
                         <div class="space-y-4">
-                             <div>
+                            <div>
                                 <h3 class="font-medium mb-2">全局分析</h3>
-                                <button onclick="showCorrelationHeatmap()" class="w-full bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition">特征相关性热力图</button>
+                                <button onclick="showCorrelationHeatmap()"
+                                    class="w-full bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition">特征相关性热力图</button>
                             </div>
                             <div>
                                 <h3 class="font-medium mb-2">多变量分析 (散点图)</h3>
@@ -122,13 +149,18 @@
                                     <select id="scatterX" class="p-2 border border-gray-300 rounded-lg"></select>
                                     <select id="scatterY" class="p-2 border border-gray-300 rounded-lg"></select>
                                 </div>
-                                <button onclick="showScatterPlot()" class="w-full mt-2 bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition">生成散点图</button>
-                                <button onclick="fitScatterPlot()" id="fitButton" class="w-full mt-2 bg-teal-500 text-white p-2 rounded-lg hover:bg-teal-600 transition" disabled>随机森林拟合</button>
+                                <button onclick="showScatterPlot()"
+                                    class="w-full mt-2 bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition">生成散点图</button>
+                                <button onclick="fitScatterPlot()" id="fitButton"
+                                    class="w-full mt-2 bg-teal-500 text-white p-2 rounded-lg hover:bg-teal-600 transition"
+                                    disabled>随机森林拟合</button>
                             </div>
-                             <div>
+                            <div>
                                 <h3 class="font-medium mb-2">专题分析</h3>
-                                <select id="countrySelect" class="w-full p-2 border border-gray-300 rounded-lg mb-2"></select>
-                                <button onclick="showCountryTrend()" class="w-full bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition mb-2">显示该国预期寿命趋势</button>
+                                <select id="countrySelect"
+                                    class="w-full p-2 border border-gray-300 rounded-lg mb-2"></select>
+                                <button onclick="showCountryTrend()"
+                                    class="w-full bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition mb-2">显示该国预期寿命趋势</button>
                             </div>
                         </div>
                     </div>
@@ -151,24 +183,68 @@
 
             <!-- DB Management Tab -->
             <div id="db-management" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- CSV导入功能 -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <h2 class="text-2xl font-semibold mb-4">批量导入数据</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">选择CSV文件</label>
+                                <input type="file" id="csvFileInput" accept=".csv" 
+                                    class="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <p><strong>支持的格式：</strong></p>
+                                <ul class="list-disc list-inside text-xs mt-1">
+                                    <li>UTF-8 或 GBK 编码的CSV文件</li>
+                                    <li>包含标准字段名的表头</li>
+                                    <li>如：Country, Year, Life_expectancy等</li>
+                                </ul>
+                                <div class="mt-2">
+                                    <button onclick="downloadExampleCSV()" 
+                                        class="text-blue-600 hover:text-blue-800 underline text-xs">
+                                        下载CSV格式示例文件
+                                    </button>
+                                </div>
+                            </div>
+                            <button onclick="importCSV()" id="importButton"
+                                class="w-full bg-purple-500 text-white p-2 rounded-lg hover:bg-purple-600 transition disabled:bg-gray-400">
+                                上传并导入
+                            </button>
+                            <div id="importProgress" class="hidden">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <div class="flex items-center">
+                                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent mr-2"></div>
+                                        <span class="text-sm text-blue-700">正在导入数据...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="importResult" class="hidden text-sm"></div>
+                        </div>
+                    </div>
+                    
                     <div class="bg-white p-6 rounded-xl shadow-sm">
                         <h2 class="text-2xl font-semibold mb-4">更新、删除数据</h2>
                         <div class="flex items-center gap-2 mb-4">
-                            <select id="recordCountrySelect" class="w-full p-2 border border-gray-300 rounded-lg"></select>
+                            <select id="recordCountrySelect"
+                                class="w-full p-2 border border-gray-300 rounded-lg"></select>
                             <select id="recordYearSelect" class="w-full p-2 border border-gray-300 rounded-lg"></select>
-                            <button onclick="loadRecord()" class="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition whitespace-nowrap">加载数据</button>
+                            <button onclick="loadRecord()"
+                                class="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition whitespace-nowrap">加载数据</button>
                         </div>
                         <div id="recordForm" class="space-y-3"></div>
                         <div class="flex gap-4 mt-4">
-                            <button onclick="updateRecord()" class="w-full bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 transition">更新</button>
-                            <button onclick="deleteRecord()" class="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition">删除</button>
+                            <button onclick="updateRecord()"
+                                class="w-full bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 transition">更新</button>
+                            <button onclick="deleteRecord()"
+                                class="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition">删除</button>
                         </div>
                     </div>
-                     <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
                         <h2 class="text-2xl font-semibold mb-4">添加数据</h2>
                         <div id="addRecordForm" class="space-y-3"></div>
-                        <button onclick="addRecord()" class="w-full mt-4 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition">添加</button>
+                        <button onclick="addRecord()"
+                            class="w-full mt-4 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition">添加</button>
                     </div>
                 </div>
             </div>
@@ -185,7 +261,7 @@
         const rowsPerPage = 15;
         let correlationChartInstance, analysisChartInstance;
         let currentScatterX, currentScatterY;
-          const CHINESE_HEADERS = {
+        const CHINESE_HEADERS = {
             'Country': '国家', 'Year': '年份', 'Life_expectancy': '预期寿命',
             'Adult_mortality': '成人死亡率', 'Infant_deaths': '婴儿死亡数', 'Alcohol_consumption': '酒精消费',
             'Under_five_deaths': '五岁以下死亡数', 'Hepatitis_B': '乙肝疫苗接种率', 'Measles': '麻疹病例数',
@@ -194,20 +270,21 @@
             'GDP_per_capita': 'GDP人均', 'Population_mln': '人口数量(百万)', 'Thinness_ten_nineteen_years': '10-19岁消瘦率',
             'Thinness_five_nine_years': '5-9岁消瘦率', 'Schooling': '受教育年限',
             'Economy_status_Developed': '发达国家', 'Economy_status_Developing': '发展中国家', 'Status': '发展状态'
-        };document.addEventListener('DOMContentLoaded', async () => {
+        }; document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const apiUrl = 'http://localhost:5000/api/data';
                 const response = await fetch(apiUrl);
                 if (!response.ok) {
-                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);                }
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
                 const data = await response.json();
-                
+
                 // 处理数据，根据Economy_status_Developed字段创建Status
                 const processedData = data.map(row => ({
                     ...row,
                     Status: row.Economy_status_Developed === 1 ? 'Developed' : 'Developing'
                 }));
-                
+
                 processData(processedData);
                 initializeUI();
                 showCorrelationHeatmap();
@@ -220,7 +297,7 @@
         function cleanColumnName(name) {
             return name.trim().replace(/\s+/g, '_');
         }
-          function processData(data) {
+        function processData(data) {
             // 数据已经是对象数组格式
             originalData = data;
             if (originalData.length === 0) {
@@ -228,7 +305,7 @@
             }
             // 定义期望的字段显示顺序
             const FIELD_ORDER = [
-                'Country', 'Year', 'Life_expectancy', 'Adult_mortality', 
+                'Country', 'Year', 'Life_expectancy', 'Adult_mortality',
                 'Infant_deaths', 'Alcohol_consumption', 'Under_five_deaths',
                 'Hepatitis_B', 'Measles', 'BMI', 'Polio', 'Diphtheria',
                 'Incidents_HIV', 'GDP_per_capita', 'Population_mln',
@@ -247,7 +324,7 @@
                 return typeof sampleValue === 'number' && h !== 'Year' && h !== 'id';
             });
             displayData = [...originalData];
-        }        function initializeUI() {
+        } function initializeUI() {
             renderTable();
             populateSelectors();
             renderRecordForm('recordForm');
@@ -280,28 +357,28 @@
         function changeTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-            
+
             document.getElementById(tabId).classList.add('active');
             document.querySelector(`button[data-tab='${tabId}']`).classList.add('active');
-            
+
         }
 
         // --- 数据视图 (Data View) 逻辑 ---
         function renderTable() {
             const tableHead = document.getElementById('table-head');
             const tableBody = document.getElementById('table-body');
-            
+
             tableHead.innerHTML = '<tr>' + headers.map(h => `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${CHINESE_HEADERS[h] || h}</th>`).join('') + '</tr>';
-            
+
             tableBody.innerHTML = '';
             const pageData = displayData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-            
+
             pageData.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = headers.map(h => `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${row[h] === undefined ? '' : row[h]}</td>`).join('');
                 tableBody.appendChild(tr);
             });
-            
+
             updatePagination();
         }
 
@@ -309,7 +386,7 @@
             const pageInfo = document.getElementById('pageInfo');
             const totalPages = Math.ceil(displayData.length / rowsPerPage);
             pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页 (总计 ${displayData.length} 条记录)`;
-            
+
             document.getElementById('prevBtn').disabled = currentPage === 1;
             document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
         }
@@ -328,10 +405,10 @@
                 renderTable();
             }
         }
-        
+
         function applyFilter() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            if(searchTerm) {
+            if (searchTerm) {
                 displayData = originalData.filter(row => row.Country && row.Country.toLowerCase().includes(searchTerm));
             } else {
                 displayData = [...originalData];
@@ -341,8 +418,8 @@
         }
 
         function exportToCSV() {
-            let csvContent = "data:text/csv;charset=utf-8," 
-                + headers.join(',') + '\n' 
+            let csvContent = "data:text/csv;charset=utf-8,"
+                + headers.join(',') + '\n'
                 + displayData.map(e => headers.map(h => {
                     let field = e[h] === undefined ? '' : e[h];
                     // Add quotes if the field contains a comma
@@ -351,7 +428,7 @@
                     }
                     return field;
                 }).join(',')).join('\n');
-            
+
             var encodedUri = encodeURI(csvContent);
             var link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -366,7 +443,7 @@
             const countrySelect = document.getElementById('countrySelect');
             const scatterX = document.getElementById('scatterX');
             const scatterY = document.getElementById('scatterY');
-            
+
             const countries = [...new Set(originalData.map(d => d.Country))].sort();
             countries.forEach(c => {
                 const option = document.createElement('option');
@@ -374,20 +451,20 @@
                 option.textContent = c;
                 countrySelect.appendChild(option);
             });
-            
+
             numericHeaders.forEach(h => {
                 const optionX = document.createElement('option');
                 optionX.value = h;
                 optionX.textContent = CHINESE_HEADERS[h] || h;
                 scatterX.appendChild(optionX);
-                
+
                 const optionY = document.createElement('option');
                 optionY.value = h;
                 optionY.textContent = CHINESE_HEADERS[h] || h;
                 scatterY.appendChild(optionY);
             });
-             scatterX.value = 'Schooling';
-             scatterY.value = 'Life_expectancy';
+            scatterX.value = 'Schooling';
+            scatterY.value = 'Life_expectancy';
         }
 
         function renderAnalysisChart(config, title) {
@@ -400,10 +477,10 @@
         }
 
         function showCorrelationHeatmap() {
-             const lifeCorr = numericHeaders.map(h => ({
+            const lifeCorr = numericHeaders.map(h => ({
                 label: CHINESE_HEADERS[h] || h,
                 value: getCorrelation('Life_expectancy', h)
-            })).filter(c => c.label !== CHINESE_HEADERS['Life_expectancy']).sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+            })).filter(c => c.label !== CHINESE_HEADERS['Life_expectancy']).sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
             const barConfig = {
                 type: 'bar',
@@ -415,10 +492,10 @@
                         backgroundColor: lifeCorr.map(c => c.value > 0 ? 'rgba(54, 162, 235, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
                     }]
                 },
-                options: { 
+                options: {
                     indexAxis: 'y',
-                    scales: { 
-                        x: { beginAtZero: false, title: { display: true, text: '皮尔逊相关系数' } } 
+                    scales: {
+                        x: { beginAtZero: false, title: { display: true, text: '皮尔逊相关系数' } }
                     },
                     plugins: {
                         legend: { display: false }
@@ -431,11 +508,11 @@
             }
             correlationChartInstance = new Chart(ctx, barConfig);
         }
-        
+
         function getCorrelation(var1, var2) {
             const data = originalData.map(d => ({ x: d[var1], y: d[var2] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number');
             if (data.length < 2) return 0;
-            
+
             let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
             const n = data.length;
             for (const p of data) {
@@ -457,7 +534,7 @@
             currentScatterX = xVar;
             currentScatterY = yVar;
 
-            const data = originalData.map(d => ({ x: d[xVar], y: d[yVar] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number');            const config = {
+            const data = originalData.map(d => ({ x: d[xVar], y: d[yVar] })).filter(p => typeof p.x === 'number' && typeof p.y === 'number'); const config = {
                 type: 'scatter',
                 data: {
                     datasets: [{
@@ -495,7 +572,7 @@
                 alert('请先生成一个散点图。');
                 return;
             }
-            
+
             const fitButton = document.getElementById('fitButton');
             fitButton.textContent = '正在拟合...';
             fitButton.disabled = true;
@@ -550,7 +627,7 @@
         function showCountryTrend() {
             const country = document.getElementById('countrySelect').value;
             const countryData = originalData.filter(d => d.Country === country).sort((a, b) => a.Year - b.Year);
-            
+
             const config = {
                 type: 'line',
                 data: {
@@ -563,7 +640,7 @@
                         fill: false,
                     }]
                 },
-                 options: {
+                options: {
                     scales: {
                         y: { title: { display: true, text: '预期寿命 (年)' } }
                     }
@@ -571,22 +648,23 @@
             };
             renderAnalysisChart(config, `${country} 预期寿命趋势 (2000-2015)`);
         }
-        
+
         // --- 数据库管理 (DB Management) 逻辑 ---
         async function reloadData() {
             try {
                 const apiUrl = 'http://localhost:5000/api/data';
                 const response = await fetch(apiUrl);
                 if (!response.ok) {
-                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);                }
+                    throw new Error(`网络响应错误: ${response.status} ${response.statusText}`);
+                }
                 const data = await response.json();
-                
+
                 // 处理数据，根据Economy_status_Developed字段创建Status
                 const processedData = data.map(row => ({
                     ...row,
                     Status: row.Economy_status_Developed === 1 ? 'Developed' : 'Developing'
                 }));
-                
+
                 processData(processedData);
                 renderTable();
                 populateSelectors();
@@ -603,13 +681,13 @@
                 const label = document.createElement('label');
                 label.textContent = CHINESE_HEADERS[h] || h;
                 label.className = 'block text-sm font-medium text-gray-700';
-                
+
                 const input = document.createElement('input');
                 input.type = (typeof originalData[0][h] === 'number' && h !== 'Year') ? 'number' : 'text';
                 input.step = "any"; // Allow floating point numbers
                 input.name = h;
                 input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm';
-                
+
                 form.appendChild(label);
                 form.appendChild(input);
             });
@@ -620,14 +698,14 @@
             const year = parseInt(document.getElementById('recordYearSelect').value);
             const record = originalData.find(d => d.Country === country && d.Year === year);
 
-    if (record) {
-        const form = document.getElementById('recordForm');
-        headers.filter(h => h !== 'id').forEach(h => {
-            form.querySelector(`[name="${h}"]`).value = record[h] || '';
-        });
-    } else {
-        alert('未找到该国家和年份的记录！');
-    }
+            if (record) {
+                const form = document.getElementById('recordForm');
+                headers.filter(h => h !== 'id').forEach(h => {
+                    form.querySelector(`[name="${h}"]`).value = record[h] || '';
+                });
+            } else {
+                alert('未找到该国家和年份的记录！');
+            }
         }
 
         async function updateRecord() {
@@ -647,22 +725,23 @@
             try {
                 const res = await fetch('http://localhost:5000/api/record', {
                     method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedRecord)
                 });
                 const result = await res.json();
-                if(result.status === 'success') {
-                    alert(`记录已更新。`);
+                if (result.status === 'success') {
+                    alert(`记录已更新: ${result.message || '更新成功'}`);
                     await reloadData();
                     populateRecordSelectors();
                 } else {
-                    alert('记录更新失败！');
+                    alert(`记录更新失败: ${result.error || '未知错误'}`);
                 }
             } catch (error) {
+                console.error('更新记录错误:', error);
                 alert(`记录更新失败：${error.message}`);
             }
         }
-        
+
         async function addRecord() {
             const form = document.getElementById('addRecordForm');
             let newRecord = {};
@@ -674,27 +753,28 @@
                 }
                 newRecord[h] = value;
             });
-    try {
-        const res = await fetch('http://localhost:5000/api/record', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(newRecord)
-        });
-        const result = await res.json();
-        if(result.status === 'success') {
-            alert('新记录已添加。');
-            await reloadData();
-            // form.reset(); // 改为手动清空所有输入框
-            Array.from(form.querySelectorAll('input')).forEach(input => input.value = '');
-            populateRecordSelectors();
-        } else {
-            alert('添加记录失败！');
+            try {
+                const res = await fetch('http://localhost:5000/api/record', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newRecord)
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert(`新记录已添加: ${result.message || '添加成功'}`);
+                    await reloadData();
+                    // 清空所有输入框
+                    Array.from(form.querySelectorAll('input')).forEach(input => input.value = '');
+                    populateRecordSelectors();
+                } else {
+                    alert(`添加记录失败: ${result.error || '未知错误'}`);
+                }
+            } catch (error) {
+                console.error('添加记录错误:', error);
+                alert(`添加记录失败：${error.message}`);
+            }
         }
-    } catch (error) {
-        alert(`添加记录失败：${error.message}`);
-    }
-}
-        
+
         async function deleteRecord() {
             const country = document.getElementById('recordCountrySelect').value;
             const year = parseInt(document.getElementById('recordYearSelect').value);
@@ -702,25 +782,187 @@
                 try {
                     const res = await fetch('http://localhost:5000/api/record', {
                         method: 'DELETE',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ Country: country, Year: year })
                     });
                     const result = await res.json();
-                    if(result.status === 'success') {
+                    if (result.status === 'success') {
                         await reloadData();
-                        // 手动清空所有输入框，避免 reset 报错
+                        // 手动清空所有输入框
                         Array.from(document.getElementById('recordForm').querySelectorAll('input')).forEach(input => input.value = '');
                         populateRecordSelectors();
-                        alert(`已删除：${country} ${year}年的记录。`);
+                        alert(`已删除：${country} ${year}年的记录 - ${result.message || '删除成功'}`);
                     } else {
-                        alert('记录删除失败，未找到该记录！');
+                        alert(`记录删除失败: ${result.error || '未找到该记录'}`);
                     }
                 } catch (error) {
+                    console.error('删除记录错误:', error);
                     alert(`记录删除失败：${error.message}`);
                 }
             }
         }
+
+        // --- CSV导入功能 ---
+        async function downloadExampleCSV() {
+            try {
+                const response = await fetch('http://localhost:5000/api/sample_csv');
+                if (!response.ok) {
+                    throw new Error(`下载失败: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'life_expectancy_sample.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('下载示例文件失败:', error);
+                alert(`下载示例文件失败: ${error.message}`);
+            }
+        }
+
+        async function importCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            const importButton = document.getElementById('importButton');
+            const importProgress = document.getElementById('importProgress');
+            const importResult = document.getElementById('importResult');
+
+            // 检查是否选择了文件
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('请选择一个CSV文件！');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            
+            // 检查文件类型
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('请选择CSV格式的文件！');
+                return;
+            }
+
+            // 检查文件大小（限制为10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('文件太大！请选择小于10MB的文件。');
+                return;
+            }
+
+            // 准备上传
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 显示进度条
+            importProgress.classList.remove('hidden');
+            importResult.classList.add('hidden');
+            importButton.disabled = true;
+            importButton.textContent = '导入中...';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/import_csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // 导入成功
+                    const message = result.message || '数据导入成功！';
+                    let detailsHtml = '';
+                    
+                    // 如果有详细信息，显示统计
+                    if (result.details) {
+                        detailsHtml = `
+                            <div class="mt-2 text-xs text-green-600">
+                                <p>总计: ${result.details.total} 行，成功: ${result.details.successful} 行，失败: ${result.details.failed} 行</p>
+                                ${result.details.errors && result.details.errors.length > 0 ? 
+                                    `<details class="mt-1">
+                                        <summary class="cursor-pointer">查看错误详情</summary>
+                                        <ul class="mt-1 ml-4 list-disc">
+                                            ${result.details.errors.map(error => `<li>${error}</li>`).join('')}
+                                        </ul>
+                                    </details>` : ''
+                                }
+                            </div>
+                        `;
+                    }
+                    
+                    importResult.innerHTML = `
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-2">
+                                    <p class="text-sm font-medium text-green-800">导入完成！</p>
+                                    <p class="text-sm text-green-700">${message}</p>
+                                    <p class="text-sm text-green-600 mt-1">页面数据将自动刷新。</p>
+                                    ${detailsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 重新加载数据
+                    await reloadData();
+                    populateRecordSelectors();
+                    
+                    // 清除文件选择
+                    fileInput.value = '';
+                    
+                } else {
+                    // 导入失败
+                    throw new Error(result.error || '导入失败');
+                }
+
+            } catch (error) {
+                console.error('CSV导入失败:', error);
+                importResult.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-2">
+                                <p class="text-sm font-medium text-red-800">导入失败！</p>
+                                <p class="text-sm text-red-700">${error.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                // 隐藏进度条，恢复按钮状态
+                importProgress.classList.add('hidden');
+                importResult.classList.remove('hidden');
+                importButton.disabled = false;
+                importButton.textContent = '上传并导入';
+            }
+        }
+
+        // 文件选择变化时的处理
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('csvFileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    const importResult = document.getElementById('importResult');
+                    if (importResult) {
+                        importResult.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        // 下载CSV示例文件
     </script>
 
 </body>
+
 </html>
